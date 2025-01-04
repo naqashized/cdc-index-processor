@@ -1,0 +1,13 @@
+spring:
+  application.name: users-management
+  datasource:
+    url: jdbc:postgresql://localhost:5443/test
+    username: test
+    password: test
+    initialize:  true
+  jpa:
+    hibernate:
+      ddl-auto:  update
+
+server:
+  port: 8081

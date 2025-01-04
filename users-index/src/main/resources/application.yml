@@ -1,0 +1,11 @@
+spring:
+  application.name: users-index
+  elasticsearch:
+    rest:
+      uris: http://localhost:9200
+      username: elastic
+      password: elastic
+
+
+server:
+  port: 8082
