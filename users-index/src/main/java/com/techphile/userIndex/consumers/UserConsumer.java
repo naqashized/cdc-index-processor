@@ -3,10 +3,9 @@ package com.techphile.userIndex.consumers;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.techphile.userIndex.domain.UserDocument;
-import com.techphile.userIndex.domain.UserDocumentRepository;
 import com.techphile.userIndex.domain.UserService;
-import com.techphile.userIndex.dtos.UserMessage;
 import com.techphile.userIndex.dtos.PayLoad;
+import com.techphile.userIndex.dtos.UserMessage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Bean;
@@ -30,24 +29,36 @@ public class UserConsumer {
     private final ObjectMapper objectMapper;
     private final static Logger logger = LoggerFactory.getLogger(UserConsumer.class);
 
-    public UserConsumer(UserService userService, ElasticsearchOperations elasticsearchOperations, ObjectMapper objectMapper) {
+    public UserConsumer(
+            UserService userService,
+            ElasticsearchOperations elasticsearchOperations,
+            ObjectMapper objectMapper
+    ) {
         this.userService = userService;
         this.elasticsearchOperations = elasticsearchOperations;
         this.objectMapper = objectMapper;
     }
 
     @KafkaHandler(isDefault = true)
-    public void consumeUser(LinkedHashMap userPayload) throws JsonProcessingException {
+    public void consumeUser(LinkedHashMap<?, ?> userPayload) throws JsonProcessingException {
+        logger.info("User payload: {}", objectMapper.writeValueAsString(userPayload));
         var payLoad = objectMapper
             .readValue(
                 objectMapper.writeValueAsString(userPayload.get("payload")), PayLoad.class
             );
         var userData = payLoad.after();
 
-        logger.info("User Message: {}", objectMapper.writeValueAsString(userPayload));
-
         elasticsearchOperations.indexOps(UserDocument.class).refresh();
-        userService.save(userData);
+
+        switch (payLoad.op()) {
+            case c -> userService.save(userData);
+            case u -> userService.update(userData);
+            case d -> {
+                    userData = payLoad.before();
+                    userService.delete(userData);
+                }
+            default -> logger.info("Operation not supported");
+        }
     }
 
     @Bean

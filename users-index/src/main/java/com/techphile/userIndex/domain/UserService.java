@@ -19,6 +19,17 @@ public class UserService {
                 userMessage.phone()
             );
 
+        userDocumentRepository.save(userDocument);
+    }
+
+    public void update (UserMessage userMessage) {
+        var userDocument = new UserDocument(
+                userMessage.id(),
+                userMessage.name(),
+                userMessage.email(),
+                userMessage.phone()
+            );
+
         userDocumentRepository.findById(userMessage.id())
         .ifPresentOrElse(
             existingUserDocument -> {
@@ -27,7 +38,11 @@ public class UserService {
                 existingUserDocument.setPhone(userDocument.getPhone());
                 userDocumentRepository.save(existingUserDocument);
             },
-            () -> userDocumentRepository.save(userDocument)
+            () -> {throw new IllegalArgumentException("User not found");}
         );
+    }
+
+    public void delete(UserMessage userMessage) {
+        userDocumentRepository.deleteById(userMessage.id());
     }
 }

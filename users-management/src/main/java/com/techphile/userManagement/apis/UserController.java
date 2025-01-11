@@ -37,4 +37,9 @@ public class UserController {
         user.setPhone(userRequest.phone());
         userRepository.save(user);
     }
+
+    @DeleteMapping("/{id}")
+    public void delete(@PathVariable Long id) {
+        userRepository.deleteById(id);
+    }
 }
